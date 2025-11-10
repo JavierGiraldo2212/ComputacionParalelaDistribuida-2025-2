@@ -1,17 +1,20 @@
 package co.edu.unal.paralela;
 
 import java.util.List;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
+import java.util.function.Function;
 
 /**
  * Una clase 'envoltorio' (wrapper) para varios métodos analíticos.
  */
 public final class StudentAnalytics {
     /**
-     * Calcula secuencialmente la edad promedio de todos los estudientes registrados y activos 
+     * Calcula secuencialmente la edad promedio de todos los estudientes registrados y activos
      * utilizando ciclos.
      *
      * @param studentArray Datos del estudiante para la clase.
@@ -37,7 +40,7 @@ public final class StudentAnalytics {
 
     /**
      * PARA HACER calcular la edad promedio de todos los estudiantes registrados y activos usando
-     * streams paralelos. Debe reflejar la funcionalidad de 
+     * streams paralelos. Debe reflejar la funcionalidad de
      * averageAgeOfEnrolledStudentsImperative. Este método NO debe utilizar ciclos.
      *
      * @param studentArray Datos del estudiante para esta clase.
@@ -45,11 +48,17 @@ public final class StudentAnalytics {
      */
     public double averageAgeOfEnrolledStudentsParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        double result = Arrays.stream(studentArray) //inicia stream
+            .parallel() //hace paralelo el stream
+            .filter(Student::checkIsCurrent) //filtra por checkIsCurrent
+            .mapToDouble(Student::getAge) //mapea a valor doble getAge
+            .average() //consigue el valor medio de todos los valores mapeados.
+            .orElse(0.0); // si no los puede conseguir, devuelve 0
+        return result;
     }
 
     /**
-     * Calcula secuencialmente -usando ciclos- el nombre más común de todos los estudiantes 
+     * Calcula secuencialmente -usando ciclos- el nombre más común de todos los estudiantes
      * que no están activos en la clase.
      *
      * @param studentArray Datos del estudiante para esta clase.
@@ -90,7 +99,7 @@ public final class StudentAnalytics {
 
     /**
      * PARA HACER calcula el nombre más común de todos los estudiantes que no están activos
-     * en la clase utilizando streams paralelos. Debe reflejar la funcionalidad 
+     * en la clase utilizando streams paralelos. Debe reflejar la funcionalidad
      * de mostCommonFirstNameOfInactiveStudentsImperative. Este método NO debe usar ciclos
      *
      * @param studentArray Datos de estudiantes para la clase.
@@ -98,13 +107,26 @@ public final class StudentAnalytics {
      */
     public String mostCommonFirstNameOfInactiveStudentsParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        Map<String, Long> nameCounts = Arrays.stream(studentArray)
+            .parallel()
+            .filter(s -> !s.checkIsCurrent()) //filtra por inactivos
+            .map(Student::getFirstName) //consigue el primer nombre
+            .collect(Collectors.groupingBy( 
+                Function.identity(), //agrupa por nombres
+                Collectors.counting() //cuenta occurrencias
+            ));
+
+        //busca el nombre más frequente
+        return nameCounts.entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .map(Map.Entry::getKey)
+            .orElse(null);
     }
 
     /**
-     * calcula secuencialmente el número de estudiantes que han perdido el curso 
-     * que son mayores de 20 años. Una calificación de perdido es cualquiera por debajo de 65 
-     * 65. Un estudiante ha perdido el curso si tiene una calificación de perdido 
+     * calcula secuencialmente el número de estudiantes que han perdido el curso
+     * que son mayores de 20 años. Una calificación de perdido es cualquiera por debajo de 65
+     * 65. Un estudiante ha perdido el curso si tiene una calificación de perdido
      * y no está activo en la actuialidad
      *
      * @param studentArray Datos del estudiante para la clase.
@@ -122,10 +144,10 @@ public final class StudentAnalytics {
     }
 
     /**
-     * PARA HACER calcular el número de estudiantes que han perdido el curso 
-     * que son mayores de 20 años de edad . una calificación de perdido está por debajo de 65. 
-     * Un estudiante ha perdido el curso si tiene una calificación de perdido 
-     * y no está activo en la actuialidad. Debe reflejar la funcionalidad de 
+     * PARA HACER calcular el número de estudiantes que han perdido el curso
+     * que son mayores de 20 años de edad . una calificación de perdido está por debajo de 65.
+     * Un estudiante ha perdido el curso si tiene una calificación de perdido
+     * y no está activo en la actuialidad. Debe reflejar la funcionalidad de
      * countNumberOfFailedStudentsOlderThan20Imperative. El método no debe usar ciclos.
 	 *
      * @param studentArray Datos del estudiante para la clase.
@@ -133,6 +155,11 @@ public final class StudentAnalytics {
      */
     public int countNumberOfFailedStudentsOlderThan20ParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+
+        return (int) Arrays.stream(studentArray)
+            .parallel()
+            .filter(s -> !s.checkIsCurrent() && s.getAge() > 20 && s.getGrade() < 65)
+            .count();
+
     }
 }
