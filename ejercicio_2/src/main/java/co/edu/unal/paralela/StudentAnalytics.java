@@ -117,7 +117,7 @@ public final class StudentAnalytics {
             ));
 
         //busca el nombre más frequente
-        return nameCounts.entrySet().stream()
+        return nameCounts.entrySet().parallelStream()
             .max(Map.Entry.comparingByValue())
             .map(Map.Entry::getKey)
             .orElse(null);
