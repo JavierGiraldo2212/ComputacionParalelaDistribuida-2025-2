@@ -108,7 +108,7 @@ public final class OneDimAveragingPhaser {
             final int tasks) {
 
         Phaser[] phs = new Phaser[tasks];
-        for(int i=0;i<phs.length;i++){
+        for (int i = 0; i < phs.length; i++) {
             phs[i] = new Phaser(1);
         }
 
@@ -129,15 +129,17 @@ public final class OneDimAveragingPhaser {
                         threadPrivateMyNew[j] = (threadPrivateMyVal[j - 1]
                                 + threadPrivateMyVal[j + 1]) / 2.0;
                     }
-//                    System.out.println("Arriving task: "+ i);
-                    phs[i].arrive();
-                    if(i-1>=0){
-//                        System.out.println("Arrived task "+ i +" Waiting for "+ (i-1));
-                        phs[i-1].awaitAdvance(1);
+
+                    // Signal that this task has completed its work for this iteration
+                    int phase = phs[i].arrive();
+
+                    // Wait for neighboring tasks to complete before swapping arrays
+                    // This allows overlapping computation with barrier completion
+                    if (i > 0) {
+                        phs[i - 1].awaitAdvance(phase);
                     }
-                    if(i+1<tasks){
-//                        System.out.println("Arrived task "+ i +" Waiting for "+ (i+1));
-                        phs[i+1].awaitAdvance(1);
+                    if (i < tasks - 1) {
+                        phs[i + 1].awaitAdvance(phase);
                     }
 
                     double[] temp = threadPrivateMyNew;
